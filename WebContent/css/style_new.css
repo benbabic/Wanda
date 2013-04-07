@@ -1,0 +1,36 @@
+@CHARSET "ISO-8859-1";
+
+form{
+	border:solid 1px;
+	width:600px;
+}
+label,input[type=text],textarea{
+	display: block;
+	width: 250px;
+	float: left;
+	margin-bottom: 10px;
+	font-weight:bold;
+}
+label {
+	text-align: right;
+	width: 100px;
+	padding-right: 20px;
+}
+
+br {
+	clear: left;
+}
+
+input[type=submit]{
+	margin-left:150px;
+	width: 100px;
+}
+
+input[type=reset]{
+	width: 70px;
+	margin-right:5px;
+}
+
+#conteneur_box{
+		clear:both;
+}

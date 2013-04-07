@@ -1,0 +1,6 @@
+#[AUTO-GENERATED CONFIGURATION FILE]
+#Thu Jan 31 13:39:53 CET 2013
+Password=12556633
+Driver=org.postgresql.Driver
+Login=postgres
+Url=jdbc\:postgresql\://localhost\:5432/Wanda
