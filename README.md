@@ -12,19 +12,28 @@ Be sure to have a git extension installed for eclipse like this one
 	http://www.eclipse.org/egit/
 Get git package for (Linux|Windows) 
 	http://git-scm.com/downloads
+	
+	
 
 2- import the project in your local repository
 
 Using git in command line import the project (in your git folder):
  $ git init
+ 
  $ git add remote origin https://github.com/Ornro/Wanda.git
+ 
 Or use ssh connection but be sure to give your key to github (this avoids typing in password on every push)
+
  $ git pull origin master
+ 
+ 
  
 3- Import project in eclipse
 
  Eclipse -> File -> Import -> 
  Git -> Project from Git -> Local -> add (select your local copy of the git)
+ 
+ 
 
 4- Configure classpath
 
