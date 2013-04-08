@@ -40,7 +40,7 @@ CREATE TABLE rights
 
 CREATE TABLE role
 (
-  idrole integer NOT NULL,
+  idrole serial NOT NULL,
   authlvl integer,
   description text,
   name character varying,
