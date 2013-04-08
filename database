@@ -1,0 +1,746 @@
+CREATE TABLE a3
+(
+  certificate integer NOT NULL,
+  name character varying,
+  uri character varying,
+  description text,
+  CONSTRAINT a3_pkey PRIMARY KEY (certificate)
+);
+
+CREATE TABLE containers
+(
+  table_name character varying NOT NULL,
+  CONSTRAINT "Containers_pkey" PRIMARY KEY (table_name)
+);
+
+CREATE TABLE resolution
+(
+  idresolution serial NOT NULL,
+  nom character varying,
+  description text,
+  CONSTRAINT resolution_pkey PRIMARY KEY (idresolution)
+);
+
+CREATE TABLE format
+(
+  idformat serial NOT NULL,
+  nom character varying,
+  extension character varying,
+  CONSTRAINT format_pkey PRIMARY KEY (idformat)
+);
+
+CREATE TABLE rights
+(
+  idrights serial NOT NULL,
+  description character varying,
+  name character varying,
+  minauth integer,
+  CONSTRAINT rights_pkey PRIMARY KEY (idrights)
+);
+
+CREATE TABLE role
+(
+  idrole integer NOT NULL DEFAULT nextval('rule_idrule_seq'::regclass),
+  authlvl integer,
+  description text,
+  name character varying,
+  CONSTRAINT role_pkey PRIMARY KEY (idrole)
+);
+
+CREATE TABLE rule
+(
+  idrule serial NOT NULL,
+  name character varying,
+  description character varying,
+  CONSTRAINT rule_pkey PRIMARY KEY (idrule)
+);
+
+CREATE TABLE type
+(
+  idtype serial NOT NULL,
+  name character varying,
+  description text,
+  CONSTRAINT type_pkey PRIMARY KEY (idtype)
+);
+
+CREATE TABLE workflow
+(
+  idworkflow serial NOT NULL,
+  name character varying,
+  description character varying,
+  CONSTRAINT workflow_pkey PRIMARY KEY (idworkflow)
+);
+
+CREATE TABLE metadata
+(
+  idmetadata serial NOT NULL,
+  name character varying,
+  description text,
+  hoover character varying,
+  obligation boolean,
+  CONSTRAINT metadata_pkey PRIMARY KEY (idmetadata)
+);
+
+CREATE TABLE metaconcerns
+(
+  idmetadata serial NOT NULL,
+  concerns character varying NOT NULL,
+  CONSTRAINT metaconcerns_pkey PRIMARY KEY (idmetadata, concerns),
+  CONSTRAINT metaconcerns_idmetadata_fkey FOREIGN KEY (idmetadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE TABLE wanda_user
+(
+  certificate serial NOT NULL,
+  role integer NOT NULL,
+  name character varying,
+  forename character varying,
+  creator integer,
+  mail character varying,
+  CONSTRAINT wanda_user_pkey PRIMARY KEY (certificate),
+  CONSTRAINT wanda_user_creator_fkey FOREIGN KEY (creator)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT wanda_user_role_fkey FOREIGN KEY (role)
+      REFERENCES role (idrole) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX wufk_role
+  ON wanda_user
+  USING btree
+  (certificate);
+  
+CREATE TABLE site
+(
+  idsite serial NOT NULL,
+  rule integer NOT NULL,
+  name character varying,
+  CONSTRAINT site_pkey PRIMARY KEY (idsite),
+  CONSTRAINT site_rule_fkey FOREIGN KEY (rule)
+      REFERENCES rule (idrule) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+
+CREATE TABLE corpus
+(
+  idcorpus serial NOT NULL,
+  rule integer NOT NULL,
+  _site integer,
+  owner integer NOT NULL,
+  _corpus integer,
+  name character varying,
+  CONSTRAINT corpus_pkey PRIMARY KEY (idcorpus),
+  CONSTRAINT "CCFK" FOREIGN KEY (_corpus)
+      REFERENCES corpus (idcorpus) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corpus_owner_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corpus_rule_fkey FOREIGN KEY (rule)
+      REFERENCES rule (idrule) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corpus_site_fkey FOREIGN KEY (_site)
+      REFERENCES site (idsite) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX cfk_creator
+  ON corpus
+  USING btree
+  (owner);
+
+CREATE INDEX cfk_site
+  ON corpus
+  USING btree
+  (_site);
+
+CREATE INDEX "fki_CCFK"
+  ON corpus
+  USING btree
+  (_corpus);
+
+CREATE TABLE session
+(
+  idsession serial NOT NULL,
+  rule integer NOT NULL,
+  _corpus integer NOT NULL,
+  owner integer NOT NULL,
+  name character varying,
+  CONSTRAINT session_pkey PRIMARY KEY (idsession),
+  CONSTRAINT session_corpus_fkey FOREIGN KEY (_corpus)
+      REFERENCES corpus (idcorpus) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT session_owner_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT session_rule_fkey FOREIGN KEY (rule)
+      REFERENCES rule (idrule) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX ssfk_corpus
+  ON session
+  USING btree
+  (_corpus);
+
+CREATE INDEX ssfk_creator
+  ON session
+  USING btree
+  (owner);
+  
+  
+CREATE TABLE montage
+(
+  idmontage serial NOT NULL,
+  owner integer NOT NULL,
+  _session integer,
+  link character varying,
+  name character varying,
+  CONSTRAINT montage_pkey PRIMARY KEY (idmontage),
+  CONSTRAINT montage_owner_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX mfk_owner
+  ON montage
+  USING btree
+  (owner);
+
+
+CREATE TABLE view
+(
+  idview serial NOT NULL,
+  type integer NOT NULL,
+  rule integer NOT NULL,
+  owner integer NOT NULL,
+  _session integer NOT NULL,
+  _montage integer,
+  name character varying,
+  CONSTRAINT view_pkey PRIMARY KEY (idview),
+  CONSTRAINT "VMFK" FOREIGN KEY (_montage)
+      REFERENCES montage (idmontage) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT view_rule_fkey FOREIGN KEY (rule)
+      REFERENCES rule (idrule) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT view_session_fkey FOREIGN KEY (_session)
+      REFERENCES session (idsession) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT view_type_fkey FOREIGN KEY (type)
+      REFERENCES type (idtype) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT view_wanda_user_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX "fki_VMFK"
+  ON view
+  USING btree
+  (_montage);
+
+CREATE INDEX vwfk_owner
+  ON view
+  USING btree
+  (owner);
+
+CREATE INDEX vwfk_session
+  ON view
+  USING btree
+  (_session);
+
+CREATE INDEX vwfk_type
+  ON view
+  USING btree
+  (type);
+  
+CREATE TABLE video
+(
+  idvideo serial NOT NULL,
+  workflow integer NOT NULL,
+  _view integer NOT NULL,
+  owner integer NOT NULL,
+  name character varying,
+  CONSTRAINT video_pkey PRIMARY KEY (idvideo),
+  CONSTRAINT video_view_fkey FOREIGN KEY (_view)
+      REFERENCES view (idview) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT video_wanda_user_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT video_workflow_fkey FOREIGN KEY (workflow)
+      REFERENCES workflow (idworkflow) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX vfk_owner
+  ON video
+  USING btree
+  (owner);
+
+CREATE INDEX vfk_view
+  ON video
+  USING btree
+  (_view);
+
+
+CREATE TABLE annotation
+(
+  idannotation serial NOT NULL,
+  link character varying NOT NULL,
+  workflow integer NOT NULL,
+  owner integer NOT NULL,
+  video integer,
+  _view integer,
+  name character varying,
+  CONSTRAINT annotation_pkey PRIMARY KEY (idannotation),
+  CONSTRAINT "AVFK" FOREIGN KEY (video)
+      REFERENCES video (idvideo) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT "AVWFK" FOREIGN KEY (_view)
+      REFERENCES view (idview) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT annotation_owner_fkey FOREIGN KEY (owner)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT annotation_workflow_fkey FOREIGN KEY (workflow)
+      REFERENCES workflow (idworkflow) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX afk_owner
+  ON annotation
+  USING btree
+  (owner);
+
+CREATE INDEX "fki_AVFK"
+  ON annotation
+  USING btree
+  (video);
+
+CREATE INDEX "fki_AVWFK"
+  ON annotation
+  USING btree
+  (_view);
+
+  CREATE TABLE concretevideo
+(
+  video integer NOT NULL,
+  resolution integer NOT NULL,
+  format integer NOT NULL,
+  link character varying,
+  CONSTRAINT concretevideo_pkey PRIMARY KEY (video, resolution, format),
+  CONSTRAINT concretevideo_format_fkey FOREIGN KEY (format)
+      REFERENCES format (idformat) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT concretevideo_resolution_fkey FOREIGN KEY (resolution)
+      REFERENCES resolution (idresolution) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT concretevideo_video_fkey FOREIGN KEY (video)
+      REFERENCES video (idvideo) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX cvfk_video
+  ON concretevideo
+  USING btree
+  (video);
+  
+  CREATE TABLE viewmeta
+(
+  view integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT viewmeta_pkey PRIMARY KEY (view, metadata),
+  CONSTRAINT viewmeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT viewmeta_view_fkey FOREIGN KEY (view)
+      REFERENCES view (idview) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX vwmfk_meta
+  ON viewmeta
+  USING btree
+  (metadata);
+
+CREATE INDEX vwmfk_view
+  ON viewmeta
+  USING btree
+  (view);
+  
+  CREATE TABLE videometa
+(
+  video integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT videometa_pkey PRIMARY KEY (metadata, video),
+  CONSTRAINT videometa_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT videometa_video_fkey FOREIGN KEY (video)
+      REFERENCES video (idvideo) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX vidmfk_meta
+  ON videometa
+  USING btree
+  (metadata);
+
+CREATE INDEX vidmfk_view
+  ON videometa
+  USING btree
+  (video);
+  
+  CREATE TABLE sitemeta
+(
+  site integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT sitemeta_pkey PRIMARY KEY (site, metadata),
+  CONSTRAINT sitemeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT sitemeta_site_fkey FOREIGN KEY (site)
+      REFERENCES site (idsite) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX smfk_meta
+  ON sitemeta
+  USING btree
+  (metadata);
+
+CREATE INDEX smfk_site
+  ON sitemeta
+  USING btree
+  (site);
+  
+  
+  CREATE TABLE sessionmeta
+(
+  session integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT sessionmeta_pkey PRIMARY KEY (session, metadata),
+  CONSTRAINT sessionmeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT sessionmeta_session_fkey FOREIGN KEY (session)
+      REFERENCES session (idsession) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX ssmfk_meta
+  ON sessionmeta
+  USING btree
+  (metadata);
+
+CREATE INDEX ssmfk_session
+  ON sessionmeta
+  USING btree
+  (session);
+  
+  CREATE TABLE montagemeta
+(
+  montage integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT montagemeta_pkey PRIMARY KEY (montage, metadata),
+  CONSTRAINT montagemeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT montagemeta_montage_fkey FOREIGN KEY (montage)
+      REFERENCES montage (idmontage) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX mmfk_metadata
+  ON montagemeta
+  USING btree
+  (metadata);
+
+CREATE INDEX mmfk_montage
+  ON montagemeta
+  USING btree
+  (montage);
+  
+  
+CREATE TABLE corpusmeta
+(
+  corpus integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT corpusmeta_pkey PRIMARY KEY (corpus, metadata),
+  CONSTRAINT corpusmeta_corpus_fkey FOREIGN KEY (corpus)
+      REFERENCES corpus (idcorpus) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT corpusmeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX cmfk_corpus
+  ON corpusmeta
+  USING btree
+  (corpus);
+
+
+CREATE INDEX cmfk_meta
+  ON corpusmeta
+  USING btree
+  (metadata);
+
+  CREATE TABLE annotationmeta
+(
+  annotation integer NOT NULL,
+  metadata integer NOT NULL,
+  content text,
+  CONSTRAINT annotationmeta_pkey PRIMARY KEY (metadata, annotation),
+  CONSTRAINT annotationmeta_annotation_fkey FOREIGN KEY (annotation)
+      REFERENCES annotation (idannotation) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT annotationmeta_metadata_fkey FOREIGN KEY (metadata)
+      REFERENCES metadata (idmetadata) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX annotmfk_corpus
+  ON annotationmeta
+  USING btree
+  (annotation);
+
+CREATE INDEX annotmfk_meta
+  ON annotationmeta
+  USING btree
+  (metadata);
+
+CREATE TABLE userannotationaccess
+(
+  wanda_user integer NOT NULL,
+  annotation integer NOT NULL,
+  rights integer NOT NULL,
+  lastacess date,
+  CONSTRAINT userannotationaccess_pkey PRIMARY KEY (wanda_user, annotation),
+  CONSTRAINT userannotationaccess_annotation_fkey FOREIGN KEY (annotation)
+      REFERENCES annotation (idannotation) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT userannotationaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT userannotationaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX uaafk_annotation
+  ON userannotationaccess
+  USING btree
+  (annotation);
+
+CREATE INDEX uaafk_wanda_user
+  ON userannotationaccess
+  USING btree
+  (wanda_user);
+  
+  REATE TABLE usercorpusaccess
+(
+  wanda_user integer NOT NULL,
+  corpus integer NOT NULL,
+  rights integer NOT NULL,
+  CONSTRAINT usercorpusaccess_pkey PRIMARY KEY (wanda_user, corpus),
+  CONSTRAINT usercorpusaccess_corpus_fkey FOREIGN KEY (corpus)
+      REFERENCES corpus (idcorpus) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usercorpusaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usercorpusaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX ucafk_corpus
+  ON usercorpusaccess
+  USING btree
+  (corpus);
+
+CREATE INDEX ucafk_wanda_user
+  ON usercorpusaccess
+  USING btree
+  (wanda_user);
+
+  
+  
+CREATE TABLE usermontageaccess
+(
+  wanda_user integer NOT NULL,
+  montage integer NOT NULL,
+  rights integer NOT NULL,
+  CONSTRAINT usermontageaccess_pkey PRIMARY KEY (wanda_user, montage),
+  CONSTRAINT usermontageaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usermontageaccess_view_fkey FOREIGN KEY (montage)
+      REFERENCES montage (idmontage) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usermontageaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX umoafk_view
+  ON usermontageaccess
+  USING btree
+  (montage);
+
+CREATE INDEX umoafk_wanda_user
+  ON usermontageaccess
+  USING btree
+  (wanda_user);
+  
+  
+CREATE TABLE usersessionaccess
+(
+  wanda_user integer NOT NULL,
+  session integer NOT NULL,
+  rights integer NOT NULL,
+  CONSTRAINT usersessionaccess_pkey PRIMARY KEY (wanda_user, session),
+  CONSTRAINT usersessionaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usersessionaccess_session_fkey FOREIGN KEY (session)
+      REFERENCES session (idsession) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usersessionaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX ussafk_session
+  ON usersessionaccess
+  USING btree
+  (session);
+
+CREATE INDEX ussafk_wanda_user
+  ON usersessionaccess
+  USING btree
+  (wanda_user);
+
+  
+CREATE TABLE usersiteaccess
+(
+  wanda_user integer NOT NULL,
+  site integer NOT NULL,
+  rights integer NOT NULL,
+  CONSTRAINT usersiteaccess_pkey PRIMARY KEY (wanda_user, site),
+  CONSTRAINT usersiteaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usersiteaccess_site_fkey FOREIGN KEY (site)
+      REFERENCES site (idsite) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT usersiteaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX usafk_site
+  ON usersiteaccess
+  USING btree
+  (site);
+
+CREATE INDEX usafk_wanda_user
+  ON usersiteaccess
+  USING btree
+  (wanda_user);
+
+
+
+CREATE TABLE uservideoaccess
+(
+  wanda_user integer NOT NULL,
+  video integer NOT NULL,
+  rights integer NOT NULL,
+  lastaccess date,
+  CONSTRAINT uservideoaccess_pkey PRIMARY KEY (wanda_user, video),
+  CONSTRAINT uservideoaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT uservideoaccess_video_fkey FOREIGN KEY (video)
+      REFERENCES video (idvideo) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT uservideoaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX uvafk_video
+  ON uservideoaccess
+  USING btree
+  (video);
+
+CREATE INDEX uvafk_wanda_user
+  ON uservideoaccess
+  USING btree
+  (wanda_user);
+
+CREATE TABLE userviewaccess
+(
+  wanda_user integer NOT NULL,
+  view integer NOT NULL,
+  rights integer NOT NULL,
+  CONSTRAINT userviewaccess_pkey PRIMARY KEY (wanda_user, view),
+  CONSTRAINT userviewaccess_rights_fkey FOREIGN KEY (rights)
+      REFERENCES rights (idrights) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT userviewaccess_view_fkey FOREIGN KEY (view)
+      REFERENCES view (idview) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT userviewaccess_wanda_user_fkey FOREIGN KEY (wanda_user)
+      REFERENCES wanda_user (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX uvwafk_view
+  ON userviewaccess
+  USING btree
+  (view);
+
+CREATE INDEX uvwafk_wanda_user
+  ON userviewaccess
+  USING btree
+  (wanda_user);
+
+CREATE TABLE a3videoaccess
+(
+  a3 integer NOT NULL,
+  rights integer,
+  video integer NOT NULL,
+  CONSTRAINT a3va PRIMARY KEY (a3, video),
+  CONSTRAINT a3a3fk FOREIGN KEY (a3)
+      REFERENCES a3 (certificate) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT a3vfk FOREIGN KEY (video)
+      REFERENCES video (idvideo) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+
+CREATE INDEX a3vafk_view
+  ON a3videoaccess
+  USING btree
+  (a3);
+
+CREATE INDEX a3vafk_wanda_user
+  ON a3videoaccess
+  USING btree
+  (video);
+
+
