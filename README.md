@@ -4,7 +4,7 @@ Wanda
 Wanda Video File Server project.
 
 
-Setup for Eclips
+Setup for Eclipse
 =====
 ###1- Requirements
 
