@@ -3,7 +3,7 @@ package fr.irit.wanda.entities;
 public class Role extends DescribedEntity {
 
 	public enum ROLE {
-		ADMIN(0), REGISTRED_USER(1), USER(2), A3(10), UNIDENTIFIED(-1);
+		ADMIN(0), REGISTRED_USER(1), UNIDENTIFIED(-1);
 		private int value;
 
 		private ROLE(int value) {
@@ -20,10 +20,6 @@ public class Role extends DescribedEntity {
 				return ROLE.ADMIN;
 			case 1:
 				return ROLE.REGISTRED_USER;
-			case 2:
-				return ROLE.USER;
-			case 10:
-				return ROLE.A3;
 			}
 			return ROLE.UNIDENTIFIED;
 		}
