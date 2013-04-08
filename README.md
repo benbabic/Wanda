@@ -18,6 +18,7 @@ Get git package for (Linux|Windows)
 Using git in command line import the project (in your git folder):
  $ git init
  $ git add remote origin https://github.com/Ornro/Wanda.git
+Or use ssh connection but be sure to give your key to github (this avoids typing in password on every push)
  $ git pull origin master
  
 3- Import project in eclipse
@@ -39,5 +40,5 @@ Using git in command line import the project (in your git folder):
 Developpers
 =====
 Benjamin Babic <benjamin.babic@hotmail.fr>
-Valentin Boutonné
+Valentin Boutonnï¿½
 Axel Robert
