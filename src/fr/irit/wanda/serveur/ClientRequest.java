@@ -321,4 +321,9 @@ public class ClientRequest implements IRequest {
 		}
 		return result;
 	}
+
+	@Override
+	public int getRights(NamedEntity e, User u) {
+		return new RightsAO().getRights(e, u);
+	}
 }

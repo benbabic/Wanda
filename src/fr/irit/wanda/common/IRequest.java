@@ -8,6 +8,7 @@ import fr.irit.wanda.entities.LinkedMetadata;
 import fr.irit.wanda.entities.Metadata;
 import fr.irit.wanda.entities.Montage;
 import fr.irit.wanda.entities.NamedEntity;
+import fr.irit.wanda.entities.Rights;
 import fr.irit.wanda.entities.Role;
 import fr.irit.wanda.entities.Rule;
 import fr.irit.wanda.entities.Session;
@@ -78,7 +79,7 @@ public interface IRequest {
 	
 	public NamedEntity getID(NamedEntity de);
 	
+	public int getRights(NamedEntity e, User u);
 	
-	
-	
+		
 }

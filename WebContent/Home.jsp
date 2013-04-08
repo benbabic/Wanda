@@ -37,6 +37,7 @@
 	<%@ page import="fr.irit.wanda.dao.*"%>
 	<%@ page import="java.util.Collection"%>
 	<%@ page import="java.io.*"%>
+	<%@ page import="fr.irit.wanda.ui.*"%>
 
 	<p id="top"></p>
 	<div id="main_container">
@@ -451,7 +452,7 @@
 					SiteAO sao = new SiteAO();
 						Collection<Site> sites = sao.getAll();
 						for (Site s : sites) {
-							String chaine = afficheContainer(sao.get(s.getName()), "");
+							String chaine = General.printHierarchy(sao.get(s.getName()), "");
 							out.print(chaine);
 						}
 				%>
@@ -478,33 +479,3 @@
 	</div>
 </body>
 </html>
-
-<%!// creer le texte du <li> au </li> pour chaque élément. cf hierarchie de val
-	public String afficheContainer(NamedEntity container, String chaine) {
-		ContainerAO cao = new ContainerAO();
-
-		if (cao.isContainer(container)) {
-			chaine += "<li>"; // on cree son element de liste
-
-			chaine += "<label for=\"folder\">"; // on l'identifie
-			chaine += container.getName();
-			chaine += "</label>";
-
-			chaine += "<input type=\"checkbox\" id=\"folder\" />"; // syle
-			chaine += "<ol>"; // on commence une sous liste
-			for (NamedEntity e : cao.getContent(container)) {
-				chaine += afficheContainer(e, ""); // on cree chaque élément fils de son <li> a son </li>
-			}
-			chaine += "</ol>"; // on ferme la liste des fils
-
-			chaine += "</li>"; // on clos cet élément
-		} else {
-			chaine += "<li class=\"file\">";
-			chaine += "<a href=\"\">";
-			chaine += container.getEntityName();
-			chaine += "</a>";
-			chaine += "</li>";
-		}
-
-		return chaine; // on retourne le texte html a afficher
-	}%>
