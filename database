@@ -40,7 +40,7 @@ CREATE TABLE rights
 
 CREATE TABLE role
 (
-  idrole integer NOT NULL DEFAULT nextval('rule_idrule_seq'::regclass),
+  idrole serial NOT NULL,
   authlvl integer,
   description text,
   name character varying,
@@ -552,7 +552,7 @@ CREATE INDEX uaafk_wanda_user
   USING btree
   (wanda_user);
   
-  REATE TABLE usercorpusaccess
+  CREATE TABLE usercorpusaccess
 (
   wanda_user integer NOT NULL,
   corpus integer NOT NULL,
