@@ -266,6 +266,7 @@ CREATE TABLE video
   _view integer NOT NULL,
   owner integer NOT NULL,
   name character varying,
+  private boolean,
   CONSTRAINT video_pkey PRIMARY KEY (idvideo),
   CONSTRAINT video_view_fkey FOREIGN KEY (_view)
       REFERENCES view (idview) MATCH SIMPLE
@@ -298,6 +299,7 @@ CREATE TABLE annotation
   video integer,
   _view integer,
   name character varying,
+  private boolean,
   CONSTRAINT annotation_pkey PRIMARY KEY (idannotation),
   CONSTRAINT "AVFK" FOREIGN KEY (video)
       REFERENCES video (idvideo) MATCH SIMPLE
